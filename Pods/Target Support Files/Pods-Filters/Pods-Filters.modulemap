@@ -1,0 +1,6 @@
+framework module Pods_Filters {
+  umbrella header "Pods-Filters-umbrella.h"
+
+  export *
+  module * { export * }
+}
