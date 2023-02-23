@@ -6,40 +6,39 @@
 //
 
 import Foundation
-class HeaderTableViewRepresentable : HeaderProtocole  {
+/// Header TableView Representable
+class HeaderTableViewRepresentable : TableViewHeaderRepresentable  {
     
     /// Header height
-    var headerHeight: CGFloat
+    private(set) var headerHeight: CGFloat
     
     /// Reuse identifire
-    var reuseIdentifier: String
-    
-    /// Header id
-    var headerId : Int
-    
+    private(set) var reuseIdentifier: String
+        
     /// header title
-    var headerTitle: String
+    private(set) var headerTitle: String
     
     /// Header check image url
-    var headerCheckImageURL: String
+    private(set) var headerCheckImageName: String
     
     /// Header drop down image url
-    var headerDropDownImageURL: String
+    private(set) var headerDropDownImageName: String
     
-    /// Header selection degree
-    var headerSelectDegree: Int
-    
+    enum SelectionDegree {
+        case zeroSelect
+        case partialSelect
+        case fullSelect
+    }
+        
     /**
      init without parameters
      */
     init(){
         self.headerTitle = ""
-        self.headerId = 0
         self.reuseIdentifier = HeaderView.getReuseIdentifier()
         self.headerHeight = HeaderView.getHeight()
-        self.headerDropDownImageURL = ""
-        self.headerCheckImageURL = ""
-        self.headerSelectDegree = 0
+        self.headerDropDownImageName = ""
+        self.headerCheckImageName = ""
     }
     
     /**
@@ -50,13 +49,48 @@ class HeaderTableViewRepresentable : HeaderProtocole  {
      - Parameter headerDropDownImageURL: Header drop down image URL  as string.
      - Parameter headerSelectDegree: Header select degree  as string.
      */
-    convenience init(filterTitle: String , headerId : Int , headerCheckImageURL: String , headerDropDownImageURL: String , headerSelectDegree: Int) {
+    convenience init(filterTitle: String , headerSelectionDegree: SelectionDegree, isExpanded: Bool) {
         self.init()
         self.headerTitle = filterTitle
-        self.headerId = headerId
-        self.headerCheckImageURL = headerCheckImageURL
-        self.headerDropDownImageURL = headerDropDownImageURL
-        self.headerSelectDegree = headerSelectDegree
-        
+        switch headerSelectionDegree {
+        case .zeroSelect :
+            self.headerCheckImageName = "UnSelectedCircleImage.pdf"
+        case .partialSelect :
+            self.headerCheckImageName = "PartialSelectionImage.pdf"
+        case .fullSelect:
+            self.headerCheckImageName = "ThickSelectedCircleImage"
+        }
+        if !isExpanded {
+            self.headerDropDownImageName = "DownUnfilledArrowImage"
+        }else{
+            self.headerDropDownImageName = "UnfilledArrowImage.pdf"
+        }
     }
+    
+    /**
+     setter for check image
+     */
+    func setHeaderCheckImageName(selectionDegree: SelectionDegree){
+        switch selectionDegree {
+        case .zeroSelect :
+            self.headerCheckImageName = "UnSelectedCircleImage.pdf"
+        case .fullSelect :
+            self.headerCheckImageName = "ThickSelectedCircleImage"
+        case .partialSelect :
+            self.headerCheckImageName = "PartialSelectionImage.pdf"
+
+        }
+    }
+    
+    /**
+     setter for drop down image
+     */
+    func setHeaderDropDownImageURL(isExpanded: Bool){
+        if isExpanded{
+            self.headerDropDownImageName = "UnfilledArrowImage.pdf"
+        }else{
+            self.headerDropDownImageName = "DownUnfilledArrowImage"
+        }
+    }
+    
 }

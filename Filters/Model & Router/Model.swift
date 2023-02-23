@@ -8,31 +8,33 @@
 import Foundation
 import Alamofire
 class FiltersModel{
+//    static var data: String {
+//        get{
+//            return "data"
+//        }
+//    }
+    enum Keys: String{
+        case data
+    }
     
     /**
      Get all countries
      - Parameter CompletionHandler: Result<[Filters],NSError>
      */
-    class func getFilters(CompletionHandler:@escaping(Result<[Filters],NSError>)->Void) {
-        var allFilters : [Filters] = []
+    class func getFilters(CompletionHandler:@escaping(Result<[String:FilterCategory],NSError>)->Void) {
+        var allFilters : [String:FilterCategory] = [:]
         AF.request(FilterRouter.allFilters).responseJSON { response in
             switch response.result {
             case .success(let value):
                 if let JSON = value as? [String: Any] {
-                    if let data = JSON["data"] {
+                    if let data = JSON[Keys.data.rawValue] {
                         if let json2 = data as? [String: Any]{
-                            let Classifications = json2["HECS"] as? [String : Any] ?? [:]
-                            let classificationsFilters = Filters(dict: Classifications)
-                            allFilters.append(classificationsFilters)
-                            let cusine = json2["cusine"] as? [String : Any] ?? [:]
-                            let cusineFilters = Filters(dict: cusine)
-                            allFilters.append(cusineFilters)
-                            let positions = json2["positions"] as? [String : Any] ?? [:]
-                            let positionsFilters = Filters(dict: positions)
-                            allFilters.append(positionsFilters)
-                            let skills = json2["skills"] as? [String : Any] ?? [:]
-                            let skillsFilters = Filters(dict: skills)
-                            allFilters.append(skillsFilters)
+                            for value in json2 {
+                                let filterCategory = json2[value.key] as? [String : Any] ?? [:]
+                                let filter = FilterCategory(dict: filterCategory)
+                                allFilters[value.key] = filter
+
+                            }
                             CompletionHandler(.success(allFilters))
                         }
                     }
@@ -43,6 +45,16 @@ class FiltersModel{
             }
             
         }
+        
+    }
+    
+    func func1(completion: @escaping ()->Bool){
+        func2{
+            true
+        }
+    }
+    
+    func func2(completion: @escaping ()->Bool){
         
     }
     

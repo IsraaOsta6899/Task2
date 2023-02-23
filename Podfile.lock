@@ -1,16 +1,20 @@
 PODS:
   - Alamofire (5.6.4)
+  - JNSegmentedControl (1.0.6)
 
 DEPENDENCIES:
   - Alamofire
+  - JNSegmentedControl
 
 SPEC REPOS:
   trunk:
     - Alamofire
+    - JNSegmentedControl
 
 SPEC CHECKSUMS:
   Alamofire: 4e95d97098eacb88856099c4fc79b526a299e48c
+  JNSegmentedControl: 98588c1d06a1126f740f6c6aa8c6a901cfa07e84
 
-PODFILE CHECKSUM: 4f11b28304c4a61a611fed7a1569f4bc8831c147
+PODFILE CHECKSUM: 168b94884271b45f5dac7ec2271befd98bf21259
 
 COCOAPODS: 1.11.3

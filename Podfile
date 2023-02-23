@@ -7,5 +7,7 @@ target 'Filters' do
 
   # Pods for Filters
 pod 'Alamofire'
+pod 'JNSegmentedControl'
+
 
 end

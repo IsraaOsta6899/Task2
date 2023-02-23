@@ -25,8 +25,7 @@ enum FilterRouter: URLRequestConvertible {
         switch self {
         case .allFilters :
             return "/core/api/v1/public_job/getActiveFilters"
-        }
-        
+        }        
     }
     
     // http methode for each case
@@ -38,10 +37,8 @@ enum FilterRouter: URLRequestConvertible {
         
     }
     
-    
     // method to return completed request
     func asURLRequest() throws -> URLRequest {
-        
         let url = try baseURL.asURL().appendingPathComponent(path).absoluteString
         var request = URLRequest(url: URL(string: url)!)
         request.method = method

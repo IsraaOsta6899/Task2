@@ -8,14 +8,14 @@
 import Foundation
 import Foundation
 class SectionTableViewRepresentable {
-     typealias mytuple = (key: Int, value: CellsProtocole)
      /// header representable
      var headerRepresentable: HeaderTableViewRepresentable?
     
-     /// cells representabels as [CellsProtocole]
-     var cellsRepresentable: [mytuple] = []
+     /// cells representabels as [TableViewCellRepresentable]
+     var cellsRepresentable: [TableViewCellRepresentable] = []
     
      /// is Expanded as bool
      var isExpanded : Bool = false
-     
+    
+     var sectionKey: String = ""
 }

@@ -1,0 +1,6 @@
+framework module JNSegmentedControl {
+  umbrella header "JNSegmentedControl-umbrella.h"
+
+  export *
+  module * { export * }
+}

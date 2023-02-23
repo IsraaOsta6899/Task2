@@ -6,13 +6,13 @@
 //
 
 import Foundation
-class LoadingTableViewCellRepresentable: CellsProtocole {
+class LoadingTableViewCellRepresentable: TableViewCellRepresentable {
     
     /// Cell height
-    var cellHeight: CGFloat
+    private(set) var cellHeight: CGFloat
     
     /// Reuse identifier
-    var reuseIdentifier: String
+    private(set) var reuseIdentifier: String
     
     /**
       init without parameters.

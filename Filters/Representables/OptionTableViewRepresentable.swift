@@ -7,28 +7,24 @@
 
 import Foundation
 import UIKit
-class OptionTableViewCellRepresentable: CellsProtocole {
+class OptionTableViewCellRepresentable: TableViewCellRepresentable {
     
     /// Cell height
-    var cellHeight: CGFloat
+    private(set) var cellHeight: CGFloat
     
     /// Reuse identifier
-    var reuseIdentifier: String
+    private(set) var reuseIdentifier: String
     
     /// Check image url
-    var checkImageURL: String
+    private(set) var checkImageName: String
     
     /// Title
-    var title: String
+    private(set) var title: String
     
-    /// is selected flag
-    var isSelected: Bool
-    
-    /// Cell Id
-    var cellID: Int
-    
-    /// Reuse identifier
-    var section: Int
+    // TODO: - Rename to id
+    /// Option Key
+    private(set) var id: Int
+
     /**
       init without parameters.
      */
@@ -36,10 +32,8 @@ class OptionTableViewCellRepresentable: CellsProtocole {
         self.cellHeight = OptionTableViewCell.getHeight()
         self.reuseIdentifier = OptionTableViewCell.getReuseIdentifier()
         self.title = ""
-        self.checkImageURL = ""
-        self.isSelected = false
-        self.cellID = 0
-        self.section = 0
+        self.checkImageName = ""
+        self.id = 0
     }
     
     /**
@@ -49,12 +43,21 @@ class OptionTableViewCellRepresentable: CellsProtocole {
      - Parameter cellID:  Cell id  as Int.
      - Parameter section: section  as Int.
      */
-    convenience init(optionTitle: String , optionCheckImageURL: String , cellID: Int , section: Int ) {
+    convenience init(optionTitle: String , isSelected: Bool , id: Int) {
         self.init()
         self.title = optionTitle
-        self.checkImageURL = optionCheckImageURL
-        self.cellID = cellID
-        self.section = section
+        
+        //TODO: - Change call of code
+        setCheckImageName(isSelected: isSelected)
+        self.id = id
+    }
+    
+    func setCheckImageName(isSelected: Bool) {
+        if isSelected {
+            self.checkImageName = "ThickSelectedCircleImage.pdf"
+        }else{
+            self.checkImageName = "UnSelectedCircleImage.pdf"
+        }
     }
     
 }

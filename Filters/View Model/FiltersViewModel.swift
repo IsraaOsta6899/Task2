@@ -11,45 +11,70 @@ import UIKit
 class FilterViewModel {
     
     /// All Filters
-    private var allFilters: [Filters]
+    private var allFilters: [String: FilterCategory]
+    
+    /// Keys
+    private var keys: Array<String>
     
     /// Representable
     private var representables: [SectionTableViewRepresentable]
     
-    /// Selected Filters Name
-    private(set)var selectedFiltersName: Set<String>
-    
-    /// Searching flag
-    private var searching = false
     
     /// Filterd Representable for search operation
     private var filterdRepresentable: [SectionTableViewRepresentable]
     
-    /// Selected Filters Options
-    private(set) var SelectedFiltersOptions: [[Int:String]]
+    /// Selected Categories
+    //TODO: - Rename to partail...
+    private(set) var partialSelectedFiltersForFilterCategory: [String: Set<Int>]
     
-    /// Searching Text
+    /// selectionDegree Foreach Section
+    private var selectionDegreeForeachCategory: [String: SelectionDegree]
+    
+    /// Expanded Sections
+    private var expandedSectionsName : Set<String>
+    
+    /// Bottom seletion view representabels
+    private var bottomSeletionViewRepresentabel: [BottomSeletionViewRepresentabel] = []
+    
+    /// Searching text
     private var searchingText = ""
+    
+    ///Selection Degree
+    enum SelectionDegree {
+        case zeroSelect
+        case partialSelect
+        case fullSelect
+    }
     
     /// init
     init() {
-        self.allFilters = []
+        self.allFilters = [:]
         self.representables = []
         self.filterdRepresentable = []
-        let x = SectionTableViewRepresentable()
-        x.cellsRepresentable.append((0,LoadingTableViewCellRepresentable()))
-        x.isExpanded = true
-        self.representables.append(x)
-        self.selectedFiltersName = []
-        self.SelectedFiltersOptions = [[:],[:],[:],[:]]
-        self.filterdRepresentable.append(x)
+        self.partialSelectedFiltersForFilterCategory = [:]
+        self.keys = []
+        self.expandedSectionsName = []
+        self.selectionDegreeForeachCategory = [:]
+        let sectionRepresentableForLoadingCell = SectionTableViewRepresentable()
+        sectionRepresentableForLoadingCell.cellsRepresentable.append(LoadingTableViewCellRepresentable())
+        sectionRepresentableForLoadingCell.isExpanded = true
+        self.filterdRepresentable.append(sectionRepresentableForLoadingCell)
     }
     
     /**
-     Set filters.
+     Set filters
      */
-    func setFilters(allFilters: [Filters]){
+    func setFilters(allFilters: [String: FilterCategory]) {
         self.allFilters = allFilters
+        self.keys = self.allFilters.keys.sorted(by: {$0 < $1})
+        
+        for item in self.allFilters {
+            
+            if self.selectionDegreeForeachCategory[item.value.title] == nil {
+                self.selectionDegreeForeachCategory[item.value.title] = .zeroSelect
+            }
+        }
+        
         self.buildRepresentable()
     }
     
@@ -57,34 +82,54 @@ class FilterViewModel {
      Build representable.
      */
     private func buildRepresentable() {
+        
+        // Remove loading
         self.representables.removeAll()
-        for (index , filter) in self.allFilters.enumerated() {
+        
+        
+        for filterCategoryName in self.keys {
+            
             let sectionRepresentable = SectionTableViewRepresentable()
-            sectionRepresentable.headerRepresentable = HeaderTableViewRepresentable(filterTitle: filter.title, headerId: index, headerCheckImageURL: "UnSelectedCircleImage.pdf", headerDropDownImageURL: "DownUnfilledArrowImage.pdf" , headerSelectDegree: 0)
-            for (index2,option) in filter.filters.enumerated() {
-                if self.SelectedFiltersOptions[index].contains(where:{$0.key == option.id}){
-                    print("--------00000")
-                    sectionRepresentable.cellsRepresentable.append((option.id,OptionTableViewCellRepresentable(optionTitle: option.name , optionCheckImageURL: "ThickSelectedCircleImage.pdf", cellID: index2, section: index)))
-                }else{
-                    sectionRepresentable.cellsRepresentable.append((option.id,OptionTableViewCellRepresentable(optionTitle: option.name , optionCheckImageURL: "UnSelectedCircleImage.pdf", cellID: index2, section: index)))
-                }
+            sectionRepresentable.sectionKey = filterCategoryName
+            sectionRepresentable.isExpanded = self.expandedSectionsName.contains(self.allFilters[filterCategoryName]!.title)
+            sectionRepresentable.headerRepresentable = HeaderTableViewRepresentable(filterTitle: self.allFilters[filterCategoryName]!.title,  headerSelectionDegree: .zeroSelect, isExpanded: sectionRepresentable.isExpanded)
+            
+            guard let filters = self.allFilters[filterCategoryName]?.filters else {
+                return
             }
-            if self.selectedFiltersName.contains(sectionRepresentable.headerRepresentable!.headerTitle){
-                if sectionRepresentable.cellsRepresentable.count == self.SelectedFiltersOptions[index].count{
-                    sectionRepresentable.headerRepresentable?.headerCheckImageURL = "ThickSelectedCircleImage.pdf"
-                }else if  sectionRepresentable.cellsRepresentable.count == 0{
-                    sectionRepresentable.headerRepresentable?.headerCheckImageURL = "UnSelectedCircleImage.pdf"
-                }else{
-                    sectionRepresentable.headerRepresentable?.headerCheckImageURL = "PartialSelectionImage.pdf"
+            
+        // TODO: - First step on Selection degree value
+            for option in filters {
+
+                let optionCellRepresentable = OptionTableViewCellRepresentable(optionTitle: option.name , isSelected: true, id: option.id)
+                
+                if self.selectionDegreeForeachCategory[self.allFilters[filterCategoryName]!.title] == .fullSelect{
+                    optionCellRepresentable.setCheckImageName(isSelected: true)
+                    sectionRepresentable.headerRepresentable?.setHeaderCheckImageName(selectionDegree: .fullSelect)
                     
+                }else if  self.selectionDegreeForeachCategory[self.allFilters[filterCategoryName]!.title] == .partialSelect {
+                    
+                    sectionRepresentable.headerRepresentable?.setHeaderCheckImageName(selectionDegree: .partialSelect)
+                    if self.partialSelectedFiltersForFilterCategory[allFilters[filterCategoryName]!.title]!.contains(option.id) {
+                        optionCellRepresentable.setCheckImageName(isSelected: true)
+                        
+                    }else{
+                        optionCellRepresentable.setCheckImageName(isSelected: false)
+                    }
+                }else {
+                    sectionRepresentable.headerRepresentable?.setHeaderCheckImageName(selectionDegree: .zeroSelect)
+                    optionCellRepresentable.setCheckImageName(isSelected: false)
                 }
+                sectionRepresentable.cellsRepresentable.append(optionCellRepresentable)
             }
+            
             self.representables.append(sectionRepresentable)
         }
-        if !self.searching{
+        
+        if self.searchingText.isEmpty {
             self.filterdRepresentable = self.representables
         }else {
-            searchBar(searchText: self.searchingText)
+            self.searchBar(searchText: self.searchingText)
         }
         
     }
@@ -103,11 +148,14 @@ class FilterViewModel {
      - Returns: Number of rows in section as Int.
      */
     func numberOfRows(inSection section: Int) -> Int {
-        if section < filterdRepresentable.count && filterdRepresentable[section].isExpanded{
-            return self.filterdRepresentable[section].cellsRepresentable.count
-        }else{
-            return 0
+        
+        if section < filterdRepresentable.count {
+            if filterdRepresentable[section].isExpanded {
+                return self.filterdRepresentable[section].cellsRepresentable.count
+            }
         }
+        
+        return 0
     }
     
     /**
@@ -121,6 +169,7 @@ class FilterViewModel {
             if representable is LoadingTableViewCellRepresentable {
                 return LoadingTableViewCell.getHeight(tableview: tableView)
             }else if let optionTableViewCellRepresentable = representable as? OptionTableViewCellRepresentable {
+                tableView.estimatedRowHeight = 70
                 return optionTableViewCellRepresentable.cellHeight
             }
         }
@@ -132,9 +181,9 @@ class FilterViewModel {
      - Parameter indexPath: Index path.
      - Returns: Cell representable as TableViewCellRepresentable.
      */
-    func representableForRow(at indexPath: IndexPath) -> CellsProtocole? {
+    func representableForRow(at indexPath: IndexPath) -> TableViewCellRepresentable? {
         if self.filterdRepresentable.count > indexPath.section && self.filterdRepresentable[indexPath.section].cellsRepresentable.count > indexPath.row{
-            return self.filterdRepresentable[indexPath.section].cellsRepresentable[indexPath.row].value
+            return self.filterdRepresentable[indexPath.section].cellsRepresentable[indexPath.row]
         }else{
             return nil
         }
@@ -145,13 +194,12 @@ class FilterViewModel {
      - Parameter section: Int
      - Returns: Header Representable for section as HeaderTableViewRepresentable.
      */
-    func representableForHeader(at section: Int) -> HeaderProtocole? {
+    func representableForHeader(at section: Int) -> TableViewHeaderRepresentable? {
         if self.filterdRepresentable.count > 0{
             return self.filterdRepresentable[section].headerRepresentable
         }else{
             return nil
         }
-
     }
     
     /**
@@ -168,116 +216,138 @@ class FilterViewModel {
      Check  which section pressed to update table view header data
      - Parameter section: Int
      */
-    func dropDownPress(section: Int) {
-            if section < self.filterdRepresentable.count{
-                self.filterdRepresentable[section].isExpanded = !self.filterdRepresentable[section].isExpanded
-                if self.filterdRepresentable[section].isExpanded{
-                    self.filterdRepresentable[section].headerRepresentable?.headerDropDownImageURL = "UnfilledArrowImage.pdf"
-                }else{
-                    self.filterdRepresentable[section].headerRepresentable?.headerDropDownImageURL = "DownUnfilledArrowImage.pdf"
+    func toggleExpansionForSection(section: Int) {
+        
+        if section < self.filterdRepresentable.count {
+            
+            self.filterdRepresentable[section].isExpanded = !self.filterdRepresentable[section].isExpanded
+            if self.filterdRepresentable[section].isExpanded {
+                self.filterdRepresentable[section].headerRepresentable?.setHeaderDropDownImageURL(isExpanded: true)
+                self.expandedSectionsName.insert(self.allFilters[self.filterdRepresentable[section].sectionKey]!.title)
+            }else{
+                self.filterdRepresentable[section].headerRepresentable?.setHeaderDropDownImageURL(isExpanded: false)
+                self.expandedSectionsName.remove(self.allFilters[self.filterdRepresentable[section].sectionKey]!.title)
             }
         }
     }
+    
     
     /**
      Check  which cell pressed in which section to update it's data
      - Parameter section: Int
      - Parameter cellID: Int
      */
-    func checkImageForOptionCellPressed(cellID: Int , section: Int) {
-        if let optionRepresentableTableViewCell = self.representables[section].cellsRepresentable[cellID].value as? OptionTableViewCellRepresentable{
-            optionRepresentableTableViewCell.isSelected = !optionRepresentableTableViewCell.isSelected
-            let idOfOption = self.representables[section].cellsRepresentable[cellID].key
-            let nameOfOption = optionRepresentableTableViewCell.title
-            let nameOfFilter = self.allFilters[section].title
-            if optionRepresentableTableViewCell.isSelected == true {
-                optionRepresentableTableViewCell.checkImageURL = "ThickSelectedCircleImage.pdf"
-                if !self.selectedFiltersName.contains(nameOfFilter){
-                    self.selectedFiltersName.insert(nameOfFilter)
-                    self.representables[section].headerRepresentable?.headerCheckImageURL = "PartialSelectionImage.pdf"
+    func toggleIsSelectedForFilter(indexPath: IndexPath) {
+        
+        
+        if indexPath.section < self.filterdRepresentable.count {
+            
+            let sectionRepresentable = self.filterdRepresentable[indexPath.section]
+            
+            // TODO: - Merge guard with if
+            guard let indexForSection: Int = self.keys.firstIndex(where: {$0 == sectionRepresentable.sectionKey}) , let optionFilterRepresentableCell = self.representableForRow(at: indexPath) as? OptionTableViewCellRepresentable  else {return}
+            let nameOfSection: String = self.filterdRepresentable[indexPath.section].sectionKey
+                let filterID = optionFilterRepresentableCell.id
+                let nameOfFilter = self.allFilters[nameOfSection]!.title
+                var flag = false
+                if self.selectionDegreeForeachCategory[nameOfFilter] == .fullSelect || (self.selectionDegreeForeachCategory[nameOfFilter] == .partialSelect && self.partialSelectedFiltersForFilterCategory[nameOfFilter]!.contains(filterID)) {
+                    flag = true
                 }
-                if !self.SelectedFiltersOptions[section].contains(where: {$0.key == idOfOption}){
-                    self.SelectedFiltersOptions[section][idOfOption]=nameOfOption
-                    if self.SelectedFiltersOptions[section].count < self.allFilters[section].filters.count{
-                        self.representables[section].headerRepresentable?.headerCheckImageURL = "PartialSelectionImage.pdf"
-                        self.representables[section].headerRepresentable?.headerSelectDegree = 1
-                        
-                    }else if self.SelectedFiltersOptions[section].count == self.allFilters[section].filters.count {
-                        self.representables[section].headerRepresentable?.headerCheckImageURL = "ThickSelectedCircleImage.pdf"
-                        self.representables[section].headerRepresentable?.headerSelectDegree = 2
-                        
+                if !flag {
+                    optionFilterRepresentableCell.setCheckImageName(isSelected: true)
+                    
+                    if self.selectionDegreeForeachCategory[nameOfFilter] == .zeroSelect {
+                        self.partialSelectedFiltersForFilterCategory[nameOfFilter] = []
                     }
-                }
-                
-            }else{
-                optionRepresentableTableViewCell.checkImageURL = "UnSelectedCircleImage.pdf"
-                if self.SelectedFiltersOptions[section].contains(where: {$0.key == idOfOption}){
-                    self.SelectedFiltersOptions[section].removeValue(forKey: idOfOption)
-                    if self.SelectedFiltersOptions[section].isEmpty{
-                        self.representables[section].headerRepresentable?.headerCheckImageURL = "UnSelectedCircleImage.pdf"
-                        self.representables[section].headerRepresentable?.headerSelectDegree = 0
-                        self.selectedFiltersName.remove(representables[section].headerRepresentable!.headerTitle)
+                    
+                    self.partialSelectedFiltersForFilterCategory[nameOfFilter]?.insert(filterID)
+                    
+                    // TODO: - Fix for 1 value.
+                    if (self.selectionDegreeForeachCategory[nameOfFilter] == .zeroSelect &&  self.allFilters[nameOfSection]!.filters.count  > 1) || (self.selectionDegreeForeachCategory[nameOfFilter] == .partialSelect && self.partialSelectedFiltersForFilterCategory[nameOfFilter]!.count < self.allFilters[nameOfSection]!.filters.count ) {
+                        self.selectionDegreeForeachCategory[nameOfFilter] = .partialSelect
+                        self.filterdRepresentable[indexPath.section].headerRepresentable?.setHeaderCheckImageName(selectionDegree: .partialSelect)
                         
-                    }else if self.SelectedFiltersOptions[section].count < self.allFilters[section].filters.count{
-                        self.representables[section].headerRepresentable?.headerCheckImageURL = "PartialSelectionImage.pdf"
-                        self.representables[section].headerRepresentable?.headerSelectDegree = 1
+                    }else if (self.selectionDegreeForeachCategory[nameOfFilter] == .partialSelect &&  self.partialSelectedFiltersForFilterCategory[nameOfFilter]!.count == self.allFilters[nameOfSection]!.filters.count) || (self.selectionDegreeForeachCategory[nameOfFilter] == .zeroSelect &&   self.allFilters[nameOfSection]!.filters.count == 1) {
+                        self.partialSelectedFiltersForFilterCategory[nameOfFilter]?.removeAll()
+                        self.selectionDegreeForeachCategory[nameOfFilter] = .fullSelect
+                        self.filterdRepresentable[indexPath.section].headerRepresentable?.setHeaderCheckImageName(selectionDegree: .fullSelect)
                     }
-                }
+                    
+                }else{
+                    optionFilterRepresentableCell.setCheckImageName(isSelected: false)
+                    
+                    if (self.selectionDegreeForeachCategory[nameOfFilter] == .partialSelect) || (self.selectionDegreeForeachCategory[nameOfFilter] == .fullSelect &&  self.allFilters[nameOfSection]!.filters.count == 1)  {
+                        
+                        self.partialSelectedFiltersForFilterCategory[nameOfFilter]?.remove(filterID)
+                        if self.partialSelectedFiltersForFilterCategory[nameOfFilter]?.count == 0{
+                            self.filterdRepresentable[indexPath.section].headerRepresentable?.setHeaderCheckImageName(selectionDegree: .zeroSelect)
+                            self.partialSelectedFiltersForFilterCategory[nameOfFilter] = nil
+                            self.selectionDegreeForeachCategory[nameOfFilter] = .zeroSelect
+                            
+                        }else if (self.partialSelectedFiltersForFilterCategory[nameOfFilter]?.count ?? 0) < self.allFilters[nameOfSection]?.filters.count ?? 0{
+                            self.selectionDegreeForeachCategory[nameOfFilter] = .partialSelect
+                            self.filterdRepresentable[indexPath.section].headerRepresentable?.setHeaderCheckImageName(selectionDegree: .partialSelect)
+                        }
+                    }
+                    else if self.selectionDegreeForeachCategory[nameOfFilter] == .fullSelect {
+                        self.selectionDegreeForeachCategory[nameOfFilter] = .partialSelect
+                        self.filterdRepresentable[indexPath.section].headerRepresentable?.setHeaderCheckImageName(selectionDegree: .partialSelect)
+                        for optionCell in self.representables[indexForSection].cellsRepresentable{
+                            if let optionCellRepresentable = optionCell as? OptionTableViewCellRepresentable {
+                                if optionCellRepresentable.id != filterID {
+                                    self.partialSelectedFiltersForFilterCategory[nameOfFilter]?.insert(optionCellRepresentable.id)
+                                }
+                            }
+                        }
+                    }
             }
         }
     }
     
+    //TODO: - Rename
     /**
      Check  which header image clicked to update header data
      - Parameter headerId: Int
      */
-    func checkImagePressedForHeader(headerId: Int) {
-        if let headerRepresentable = self.representables[headerId].headerRepresentable {
-            if headerRepresentable.headerSelectDegree == 2 {
-                headerRepresentable.headerSelectDegree = 0
-                if self.selectedFiltersName.contains(headerRepresentable.headerTitle){
-                    self.selectedFiltersName.remove(headerRepresentable.headerTitle)
-                }
-                self.representables[headerId].headerRepresentable?.headerCheckImageURL = "UnSelectedCircleImage.pdf"
-                self.SelectedFiltersOptions[headerId].removeAll()
-                for rep in self.representables[headerId].cellsRepresentable{
-                    if let optionRepresentable = rep.value as? OptionTableViewCellRepresentable {
-                        optionRepresentable.isSelected = false
-                        optionRepresentable.checkImageURL = "UnSelectedCircleImage.pdf"
-                        
-                    }
-                }
+    func toggleFilterCategory(indexPath: IndexPath) {
+        
+        if indexPath.section < self.filterdRepresentable.count {
+            
+            let optionFilterRepresentableSection = self.filterdRepresentable[indexPath.section]
+            
+            guard let indexForSection: Int = self.keys.firstIndex(where: {$0 == optionFilterRepresentableSection.sectionKey}) else {return}
+            
+            if let headerRepresentable = self.filterdRepresentable[indexPath.section].headerRepresentable {
+                // TODO: - Remove
+                switch self.selectionDegreeForeachCategory[headerRepresentable.headerTitle] {
+                case .fullSelect:
+                //TODO: - remove check
+                    self.partialSelectedFiltersForFilterCategory[headerRepresentable.headerTitle] = nil
+                    self.selectionDegreeForeachCategory[headerRepresentable.headerTitle] = .zeroSelect
                 
-            }else if headerRepresentable.headerSelectDegree == 1 {
-                headerRepresentable.headerSelectDegree = 2
-                self.representables[headerId].headerRepresentable?.headerCheckImageURL = "ThickSelectedCircleImage.pdf"
-                if !self.selectedFiltersName.contains(headerRepresentable.headerTitle){
-                    self.selectedFiltersName.insert(headerRepresentable.headerTitle)
-                }
-                for rep in self.representables[headerId].cellsRepresentable{
-                    if let optionRepresentable = rep.value as? OptionTableViewCellRepresentable {
-                        optionRepresentable.isSelected = true
-                        optionRepresentable.checkImageURL = "ThickSelectedCircleImage.pdf"
-                        if !self.SelectedFiltersOptions[headerId].contains(where: {$0.key == optionRepresentable.cellID}){
-                            self.SelectedFiltersOptions[headerId][optionRepresentable.cellID] = optionRepresentable.title
+                    self.filterdRepresentable[indexPath.section].headerRepresentable?.setHeaderCheckImageName(selectionDegree: .zeroSelect)
+                    
+                    for rep in self.representables[indexForSection].cellsRepresentable {
+                        if let optionRepresentable = rep as? OptionTableViewCellRepresentable {
+                            optionRepresentable.setCheckImageName(isSelected: false)
+                            
                         }
                     }
-                }
-                
-            }else if headerRepresentable.headerSelectDegree == 0{
-                headerRepresentable.headerSelectDegree = 2
-                self.representables[headerId].headerRepresentable?.headerCheckImageURL = "ThickSelectedCircleImage.pdf"
-                if !self.selectedFiltersName.contains(headerRepresentable.headerTitle){
-                    self.selectedFiltersName.insert(headerRepresentable.headerTitle)
-                }
-                for rep in self.representables[headerId].cellsRepresentable{
-                    if let optionRepresentable = rep.value as? OptionTableViewCellRepresentable {
-                        optionRepresentable.isSelected = true
-                        optionRepresentable.checkImageURL = "ThickSelectedCircleImage.pdf"
-                        if !self.SelectedFiltersOptions[headerId].contains(where: {$0.key == optionRepresentable.cellID}){
-                            self.SelectedFiltersOptions[headerId][optionRepresentable.cellID] = optionRepresentable.title
+                    
+                case .partialSelect, .zeroSelect:
+                    self.filterdRepresentable[indexPath.section].headerRepresentable?.setHeaderCheckImageName(selectionDegree: .fullSelect)
+                    
+                    self.partialSelectedFiltersForFilterCategory[headerRepresentable.headerTitle] = []
+                    
+                    for rep in self.representables[indexForSection].cellsRepresentable {
+                        if let optionRepresentable = rep as? OptionTableViewCellRepresentable {
+                            optionRepresentable.setCheckImageName(isSelected: true)
                         }
                     }
+                    
+                    self.selectionDegreeForeachCategory[headerRepresentable.headerTitle] = .fullSelect
+                default :
+                    print("")
                 }
             }
         }
@@ -288,43 +358,242 @@ class FilterViewModel {
      - Parameter searchText : String
      */
     func searchBar(searchText: String) {
+        
         self.searchingText = searchText
+        
         if searchText != "" {
-            self.searching = true
+            
             self.filterdRepresentable = []
-            typealias mytuple = (key: Int, value: OptionTableViewCellRepresentable)
-            var arr: [mytuple] = []
+            
+            var filteredOptionsRepresentables: [OptionTableViewCellRepresentable] = []
+            
             for rep in self.representables {
-                let sectionRepresentable : SectionTableViewRepresentable
-                if let optionRepresentablesCells = rep.cellsRepresentable as? [mytuple] {
-                    arr = optionRepresentablesCells.filter{$0.value.title.lowercased().prefix(searchText.count) == searchText.lowercased()}
-
+                let sectionRepresentable: SectionTableViewRepresentable
+                
+                if let optionRepresentablesCells = rep.cellsRepresentable as? [OptionTableViewCellRepresentable] {
+                    filteredOptionsRepresentables = optionRepresentablesCells.filter{$0.title.lowercased().prefix(searchText.count) == searchText.lowercased()}
                 }
-
-                if !arr.isEmpty {
+                
+                if !filteredOptionsRepresentables.isEmpty {
                     sectionRepresentable = SectionTableViewRepresentable()
-                    sectionRepresentable.cellsRepresentable = arr
+                    sectionRepresentable.sectionKey = rep.sectionKey
+                    sectionRepresentable.cellsRepresentable = filteredOptionsRepresentables
                     sectionRepresentable.headerRepresentable = rep.headerRepresentable
                     sectionRepresentable.isExpanded = true
                     self.filterdRepresentable.append(sectionRepresentable)
-                }else{
+                }else {
                     if let headerRepresentable = rep.headerRepresentable {
                         if headerRepresentable.headerTitle.contains(searchText){
                             let sectionRepresentable = SectionTableViewRepresentable()
+                            sectionRepresentable.sectionKey = rep.sectionKey
                             sectionRepresentable.headerRepresentable = headerRepresentable
                             sectionRepresentable.cellsRepresentable = []
                             sectionRepresentable.isExpanded = false
                             self.filterdRepresentable.append(sectionRepresentable)
-                            
                         }
                     }
                 }
             }
-        }else{
+        } else {
             self.filterdRepresentable = self.representables
-            self.searching = false
-            
         }
     }
+    
+    func cancleImagePressed(key: Int, section: String){
+        guard let indexForRepresentable: Int = self.representables.firstIndex(where: {$0.headerRepresentable?.headerTitle == section})else {return}
+        if key == -1 {
+            self.partialSelectedFiltersForFilterCategory[section] = nil
+            let rep = self.representables[indexForRepresentable]
+            let headerRep = rep.headerRepresentable
+            headerRep?.setHeaderCheckImageName(selectionDegree: .zeroSelect)
+            self.selectionDegreeForeachCategory[section] = .zeroSelect
+            for optionCell in self.representables[indexForRepresentable].cellsRepresentable {
+                if let optionCellRepresentable = optionCell as? OptionTableViewCellRepresentable {
+                    optionCellRepresentable.setCheckImageName(isSelected: false)                }
+            }
+        }else if let cellsRepresentablesForSection = self.representables[indexForRepresentable].cellsRepresentable as? [OptionTableViewCellRepresentable]{
+            for cellRepresentable in cellsRepresentablesForSection {
+                if cellRepresentable.id == key {
+                    cellRepresentable.setCheckImageName(isSelected: false)
+                    self.partialSelectedFiltersForFilterCategory[section]?.remove(key)
+                    if self.partialSelectedFiltersForFilterCategory[section]?.count == 0 {
+                        self.partialSelectedFiltersForFilterCategory[section] = nil
+                        self.representables[indexForRepresentable].headerRepresentable?.setHeaderCheckImageName(selectionDegree: .zeroSelect)
+                        self.selectionDegreeForeachCategory[section] = .zeroSelect
+                    }else if self.partialSelectedFiltersForFilterCategory[section]!.count < self.representables[indexForRepresentable].cellsRepresentable.count{
+                        self.representables[indexForRepresentable].headerRepresentable?.setHeaderCheckImageName(selectionDegree: .partialSelect)
+                        self.selectionDegreeForeachCategory[section] = .partialSelect
+                        
+                    }
+                    break
+                }
+            }
+        }
+    }
+    
+    func updateRepresentableForBottomViewWhenOptionCellPressed(indexPath: IndexPath)-> [BottomSeletionViewRepresentabel]{
+        var sectionId: Int = indexPath.section
+        var cellId = indexPath.row
+        if self.searchingText != ""{
+            let sectionKey = self.filterdRepresentable[indexPath.section].sectionKey
+            let filterdOptionCell = self.filterdRepresentable[indexPath.section].cellsRepresentable[indexPath.row]
+            for (index,item)in self.keys.enumerated() {
+                if item == sectionKey {
+                    sectionId = index
+                    break
+                }
+            }
+            for (index,cell) in self.representables[sectionId].cellsRepresentable.enumerated() {
+                // to get index of option inside data get from api
+                if let optionCellRep = filterdOptionCell as? OptionTableViewCellRepresentable {
+                    if let optionCell = cell as? OptionTableViewCellRepresentable {
+                        if optionCell.id == optionCellRep.id {
+                            cellId = index
+                            break
+                        }
+                    }
+                }
+            }
+        }
+        var indexOfRepresentable = -1
+        for (index,rep) in self.bottomSeletionViewRepresentabel.enumerated() {
+            if rep.categoryName == self.allFilters[self.keys[sectionId]]!.title{
+                indexOfRepresentable = index
+                break
+            }
+        }
+        if indexOfRepresentable == -1 {
+            // section not exist in bottom selection view representables
+            let bottomSeletionViewRepresentabel = BottomSeletionViewRepresentabel()
+            bottomSeletionViewRepresentabel.categoryName = self.allFilters[self.keys[sectionId]]!.title
+            bottomSeletionViewRepresentabel.categoryCellsRepresentables.append(
+                CollectionViewCellRepresentable(
+                    optionTitle: self.allFilters[self.keys[sectionId]]!.filters[cellId].name,
+                    optionKey: self.allFilters[self.keys[sectionId]]!.filters[cellId].id
+                )
+            )
+            self.bottomSeletionViewRepresentabel.append(bottomSeletionViewRepresentabel)
+        }else{
+            // section exist
+            var isSelected = false
+            for item in self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables{
+                if item.idOfOption == self.allFilters[self.keys[sectionId]]!.filters[cellId].id {
+                    isSelected = true
+                    break
+                }
+            }
+            // if flag true option exist else not exist
+            if !isSelected {
+                // item not exist in representables --
+                self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.removeAll()
+                if self.selectionDegreeForeachCategory[self.allFilters[self.keys[sectionId]]!.title] == .fullSelect{
+                    self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.append(
+                        CollectionViewCellRepresentable(
+                            optionTitle:  "All",
+                            optionKey: -1)
+                    )
+                }else{
+                    for (index,item) in self.self.allFilters[self.keys[sectionId]]!.filters.enumerated() {
+                        if self.partialSelectedFiltersForFilterCategory[self.self.allFilters[self.keys[sectionId]]!.title]!.contains(item.id){
+                            self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.append(
+                                CollectionViewCellRepresentable(
+                                    optionTitle:  self.allFilters[self.keys[sectionId]]!.filters[index].name,
+                                    optionKey: item.id)
+                            )
+                        }
+                    }
+                }
+                
+            }else {
+                // item exist in representables , so i want to remove it from representable
+                self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.removeAll(where: {$0.idOfOption == self.allFilters[self.keys[sectionId]]!.filters[cellId].id })
+                if  self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.count == 0 {
+                    self.bottomSeletionViewRepresentabel.removeAll(where: {$0.categoryName == self.allFilters[self.keys[sectionId]]!.title })
+                }
+            }
+        }
+        return self.bottomSeletionViewRepresentabel
+    }
+    
+    func updateRepresentableForBottomViewWhenHeaderPressed(sectionID: Int)-> [BottomSeletionViewRepresentabel]{
+        var sectionId = sectionID
+        if self.searchingText != "" {
+            let sectionKey = self.filterdRepresentable[sectionID].sectionKey
+            for (index,item)in self.keys.enumerated() {
+                if item == sectionKey {
+                    sectionId = index
+                    break
+                }
+            }
+        }
+        var isExist = -1
+        for (index,rep) in self.bottomSeletionViewRepresentabel.enumerated() {
+            if rep.categoryName == self.allFilters[self.keys[sectionId]]!.title{
+                isExist = index
+                break
+            }
+        }
+        let sectionSelectionDegree : SelectionDegree = self.selectionDegreeForeachCategory[self.allFilters[self.keys[sectionId]]!.title]!
+        switch sectionSelectionDegree {
+        case .fullSelect :
+            if isExist == -1 {
+                let x = BottomSeletionViewRepresentabel()
+                x.categoryName = self.allFilters[self.keys[sectionId]]!.title
+                x.categoryCellsRepresentables.append(
+                    CollectionViewCellRepresentable(
+                        optionTitle: "All",
+                        optionKey: -1
+                    )
+                )
+                self.bottomSeletionViewRepresentabel.append(x)
+            }else{
+                let y = self.bottomSeletionViewRepresentabel[isExist]
+                y.categoryCellsRepresentables.removeAll()
+                self.bottomSeletionViewRepresentabel.removeAll(where: {$0.categoryName==self.allFilters[self.keys[sectionId]]!.title})
+                let x = BottomSeletionViewRepresentabel()
+                x.categoryName = self.allFilters[self.keys[sectionId]]!.title
+                x.categoryCellsRepresentables.append(
+                    CollectionViewCellRepresentable(
+                        optionTitle: "All",
+                        optionKey: -1
+                    )
+                )
+                self.bottomSeletionViewRepresentabel.append(x)
+            }
+        case .zeroSelect :
+            let x = self.bottomSeletionViewRepresentabel[isExist]
+            x.categoryCellsRepresentables.removeAll()
+            self.bottomSeletionViewRepresentabel.removeAll(where: {$0.categoryName==self.allFilters[self.keys[sectionId]]!.title})
+        default :
+            print("")
+            
+        }
+        return self.bottomSeletionViewRepresentabel
+    }
+    
+    func updateRepresentableForBottomViewWhenCancleImagepressed(optionID: Int , sectionName: String)->[BottomSeletionViewRepresentabel]{
+        var indexOfSectionRep: Int = -1
+        for (index,rep) in self.bottomSeletionViewRepresentabel.enumerated() {
+            if sectionName == rep.categoryName {
+                indexOfSectionRep = index
+            }
+        }
+        if optionID == -1 {
+            self.bottomSeletionViewRepresentabel.removeAll(where: {$0.categoryName == sectionName})
+        }else {
+            self.bottomSeletionViewRepresentabel[indexOfSectionRep].categoryCellsRepresentables.removeAll(where: {$0.idOfOption == optionID})
+            if self.bottomSeletionViewRepresentabel[indexOfSectionRep].categoryCellsRepresentables.count == 0 {
+                self.bottomSeletionViewRepresentabel.removeAll(where: {$0.categoryName == sectionName})
+            }
+        }
+        return self.bottomSeletionViewRepresentabel
+    }
+    
+    func numberOfItemsInSection(indexOfSelectedCategory: Int)-> Int{
+        return self.bottomSeletionViewRepresentabel[indexOfSelectedCategory].categoryCellsRepresentables.count
+    }
+    
+    func representableForItemAt(sectionIndex: Int,indexPath: IndexPath)-> CollectionViewCellRepresentable{
+        return self.bottomSeletionViewRepresentabel[sectionIndex].categoryCellsRepresentables[indexPath.row]
+    }
 }
-
