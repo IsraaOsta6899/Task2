@@ -467,7 +467,7 @@ class FilterViewModel {
             let bottomSeletionViewRepresentabel = BottomSeletionViewRepresentabel()
             bottomSeletionViewRepresentabel.categoryName = self.allFilters[self.keys[sectionId]]!.title
             bottomSeletionViewRepresentabel.categoryCellsRepresentables.append(
-                CollectionViewCellRepresentable(
+                TitleCollectionViewCellRepresentable(
                     optionTitle: self.allFilters[self.keys[sectionId]]!.filters[cellId].name,
                     optionKey: self.allFilters[self.keys[sectionId]]!.filters[cellId].id
                 )
@@ -488,7 +488,7 @@ class FilterViewModel {
                 self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.removeAll()
                 if self.selectionDegreeForeachCategory[self.allFilters[self.keys[sectionId]]!.title] == .fullSelect{
                     self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.append(
-                        CollectionViewCellRepresentable(
+                        TitleCollectionViewCellRepresentable(
                             optionTitle:  "All",
                             optionKey: -1)
                     )
@@ -496,7 +496,7 @@ class FilterViewModel {
                     for (index,item) in self.self.allFilters[self.keys[sectionId]]!.filters.enumerated() {
                         if self.partialSelectedFiltersForFilterCategory[self.self.allFilters[self.keys[sectionId]]!.title]!.contains(item.id){
                             self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.append(
-                                CollectionViewCellRepresentable(
+                                TitleCollectionViewCellRepresentable(
                                     optionTitle:  self.allFilters[self.keys[sectionId]]!.filters[index].name,
                                     optionKey: item.id)
                             )
@@ -540,7 +540,7 @@ class FilterViewModel {
                 let x = BottomSeletionViewRepresentabel()
                 x.categoryName = self.allFilters[self.keys[sectionId]]!.title
                 x.categoryCellsRepresentables.append(
-                    CollectionViewCellRepresentable(
+                    TitleCollectionViewCellRepresentable(
                         optionTitle: "All",
                         optionKey: -1
                     )
@@ -553,7 +553,7 @@ class FilterViewModel {
                 let x = BottomSeletionViewRepresentabel()
                 x.categoryName = self.allFilters[self.keys[sectionId]]!.title
                 x.categoryCellsRepresentables.append(
-                    CollectionViewCellRepresentable(
+                    TitleCollectionViewCellRepresentable(
                         optionTitle: "All",
                         optionKey: -1
                     )
@@ -593,7 +593,7 @@ class FilterViewModel {
         return self.bottomSeletionViewRepresentabel[indexOfSelectedCategory].categoryCellsRepresentables.count
     }
     
-    func representableForItemAt(sectionIndex: Int,indexPath: IndexPath)-> CollectionViewCellRepresentable{
+    func representableForItemAt(sectionIndex: Int,indexPath: IndexPath)-> TitleCollectionViewCellRepresentable{
         return self.bottomSeletionViewRepresentabel[sectionIndex].categoryCellsRepresentables[indexPath.row]
     }
 }

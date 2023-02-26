@@ -11,5 +11,5 @@ class BottomSeletionViewRepresentabel  {
     
     var categoryName: String = ""
     
-    var categoryCellsRepresentables: [CollectionViewCellRepresentable] = []
+    var categoryCellsRepresentables: [TitleCollectionViewCellRepresentable] = []
 }

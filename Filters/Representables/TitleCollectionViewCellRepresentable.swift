@@ -6,13 +6,17 @@
 //
 
 import Foundation
-class CollectionViewCellRepresentable {
-    private(set) var optionTitle: String
-    private(set) var idOfOption: Int
+class TitleCollectionViewCellRepresentable : CollectionViewCellRepresentable {
     
+    private(set) var optionTitle: String
+    
+    private(set) var idOfOption: Int
+    /// Reuse identifier
+    private(set) var reuseIdentifier: String
     init(){
         self.optionTitle = ""
         self.idOfOption = 0
+        self.reuseIdentifier = CustomCollectionViewCell.getReuseIdentifier()
     }
     
     convenience init(optionTitle: String, optionKey: Int) {

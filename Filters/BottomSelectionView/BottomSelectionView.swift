@@ -13,7 +13,7 @@ import JNSegmentedControl
 class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSource, CancleCollectionViewCellDelegate {
     
     /// Outlet for swap view
-    @IBOutlet weak var swapView: UIView!
+    @IBOutlet weak var pannerView: UIView!
     
     /// Outlet for collection view
     @IBOutlet weak var collectionView: UICollectionView!
@@ -91,21 +91,20 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
         nib.instantiate(withOwner: self, options: nil)
         content.frame = bounds
         addSubview(content)
-        content.addSubview(self.swapView)
+        content.addSubview(self.pannerView)
         let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(didPan(_:)))
-        self.swapView.addGestureRecognizer(panGestureRecognizer)
+        self.pannerView.addGestureRecognizer(panGestureRecognizer)
         self.blueView.layer.cornerRadius = 10
         self.blueView.backgroundColor =  UIColor(red: 0, green: 0.5333, blue:0.866, alpha: 1)
         self.content.layer.cornerRadius = 10
-        self.swapView.layer.cornerRadius = 2.5
+        self.pannerView.layer.cornerRadius = 2.5
     }
     
     /**
      Initialize Collection View
      */
     func initCollectionView() {
-        let nib = UINib(nibName: "CustomCollectionViewCell", bundle: nil)
-        self.collectionView.register(nib, forCellWithReuseIdentifier: "CollectionViewCell")
+        CustomCollectionViewCell.registerCollectionViewCell(collectionView: self.collectionView)
         collectionView.dataSource = self
         collectionView.backgroundColor = UIColor(red: 0, green: 0.5333, blue:0.866, alpha: 1)
         collectionView.contentInset = UIEdgeInsets(top: 0, left: 8 , bottom: 0, right: 10)
@@ -133,7 +132,7 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
      - Returns collection view cell
      */
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "CollectionViewCell", for: indexPath) as! CustomCollectionViewCell
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomCollectionViewCell.getReuseIdentifier(), for: indexPath) as! CustomCollectionViewCell
         let representable = self.delegateViewModel?.representableForItemAt(sectionIndex: self.indexOfClickedCategory, indexPath: indexPath)
         cell.setup(representable: representable!)
         

@@ -60,8 +60,6 @@ class FiltersViewController: UIViewController {
     func setUpTableView() {
         self.filtersTableView.delegate = self
         self.filtersTableView.dataSource = self
-//        filtersTableView.tableFooterView = UIView()
-//        filtersTableView.bounces = false
         HeaderView.registerHeaderView(tableView: self.filtersTableView)
         let refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(getData), for: .valueChanged)
