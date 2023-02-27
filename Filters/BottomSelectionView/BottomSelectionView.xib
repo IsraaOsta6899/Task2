@@ -9,8 +9,8 @@
     <objects>
         <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="BottomSelectionView" customModule="Filters" customModuleProvider="target">
             <connections>
-                <outlet property="blueView" destination="YPJ-fe-PFW" id="yuD-Ja-Ky4"/>
                 <outlet property="collectionView" destination="5gZ-lc-nDz" id="6Ep-JP-bvJ"/>
+                <outlet property="container" destination="YPJ-fe-PFW" id="yuD-Ja-Ky4"/>
                 <outlet property="content" destination="iN0-l3-epB" id="ojK-ee-gpc"/>
                 <outlet property="pannerView" destination="5fN-Mi-8AS" id="kVO-Vt-q0w"/>
             </connections>

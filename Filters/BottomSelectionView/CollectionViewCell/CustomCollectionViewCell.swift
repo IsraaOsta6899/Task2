@@ -74,7 +74,7 @@ class CustomCollectionViewCell: UICollectionViewCell {
             newFrame2.size.width = CGFloat(ceilf(Float(w+20)))
             if newFrame2.size.width > UIScreen.main.bounds.width - 20 {
                 newFrame2.size.width = UIScreen.main.bounds.width - 30
-                newFrame2.size.height = h * Double(self.optionTitleKabel.countLines())
+                newFrame2.size.height = h * Double(self.optionTitleKabel.countLines())+5
             }
 
             layoutAttributes.frame = newFrame2
@@ -99,7 +99,6 @@ extension UILabel {
     guard let myText = self.text as NSString? else {
       return 0
     }
-    // Call self.layoutIfNeeded() if your view uses auto layout
     let rect = CGSize(width: self.bounds.width, height: CGFloat.greatestFiniteMagnitude)
     let labelSize = myText.boundingRect(with: rect, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: self.font as Any], context: nil)
     return Int(ceil(CGFloat(labelSize.height) / self.font.lineHeight))

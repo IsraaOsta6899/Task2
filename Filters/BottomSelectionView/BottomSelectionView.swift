@@ -24,17 +24,14 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
     /// delegate for view model
     weak var delegateViewModel: FilterViewModel?
     
-    /// Outlet for all blue view ( contain collection view and segment or label )
-    @IBOutlet weak var blueView: UIView!
+    /// Outlet for  container ( contain collection view and segment or label )
+    @IBOutlet weak var container: UIView!
     
     /// delegate for view controller
     weak var delegate: FiltersViewController?
     
     /// Representables
     var representables: [BottomSeletionViewRepresentabel] = []
-    
-    /// selected segment index
-    var selectedIndex: Int = 0
     
     /// positions Of Y Axis For Swap View
     var positionsOfYAxisForSwapView: [CGFloat] = []
@@ -73,10 +70,10 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
         self.indexOfClickedCategory = 0
         if self.representables.count == 1{
             self.selectedCategoryName = self.representables[0].categoryName
-            self.selectedIndex = 0
+            self.indexOfClickedCategory = 0
         }else if self.representables.count > 1{
             self.selectedCategoryName = self.representables[self.representables.count-1].categoryName
-            self.selectedIndex = self.representables.count-1
+            self.indexOfClickedCategory = self.representables.count-1
         
         }
         self.reloadView()
@@ -86,7 +83,6 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
      Initialize all bottom selection view
      */
     func initSubviews() {
-        // standard initialization logic
         let nib = UINib(nibName: "BottomSelectionView", bundle: nil)
         nib.instantiate(withOwner: self, options: nil)
         content.frame = bounds
@@ -94,8 +90,8 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
         content.addSubview(self.pannerView)
         let panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(didPan(_:)))
         self.pannerView.addGestureRecognizer(panGestureRecognizer)
-        self.blueView.layer.cornerRadius = 10
-        self.blueView.backgroundColor =  UIColor(red: 0, green: 0.5333, blue:0.866, alpha: 1)
+        self.container.layer.cornerRadius = 10
+        self.container.backgroundColor =  UIColor(red: 0, green: 0.5333, blue:0.866, alpha: 1)
         self.content.layer.cornerRadius = 10
         self.pannerView.layer.cornerRadius = 2.5
     }
@@ -133,8 +129,10 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
      */
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: CustomCollectionViewCell.getReuseIdentifier(), for: indexPath) as! CustomCollectionViewCell
-        let representable = self.delegateViewModel?.representableForItemAt(sectionIndex: self.indexOfClickedCategory, indexPath: indexPath)
-        cell.setup(representable: representable!)
+        if let representable = self.delegateViewModel?.representableForItemAt(sectionIndex: self.indexOfClickedCategory, indexPath: indexPath) as? TitleCollectionViewCellRepresentable{
+            cell.setup(representable: representable)
+
+        }
         
         // TODO: - Move to cell
         cell.setCornerRadious(radious: 4)
@@ -146,6 +144,7 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
         let screenSize: CGRect = UIScreen.main.bounds
         let contentView = content!
         let superView = contentView.superview!
+        
         let translation = gestureRecognizer.translation(in: contentView)
         if gestureRecognizer.state == .began {
             self.positionsOfYAxisForSwapView.append(translation.y)
@@ -162,6 +161,7 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
                 superView.frame.size.height = x
                 superView.frame = CGRect(x: 0, y: screenSize.height - x, width: screenSize.width, height: x)
             }
+            
         }
     }
     
@@ -171,7 +171,7 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
     func reloadView(){
         let screenSize: CGRect = UIScreen.main.bounds
         if self.representables.count < 2 {
-            for view in self.blueView.subviews {
+            for view in self.container.subviews {
                 if let labelView =  view as? UILabel {
                     labelView.removeFromSuperview()
                 }else if let segmentView = view as? JNSegmentedCollectionView {
@@ -183,11 +183,11 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
             self.selectedCategoryName = self.representables[0].categoryName
             label.textColor = .white
             label.font = UIFont(name: "OpenSans-Bold", size: 10)
-            self.blueView.addSubview(label)
+            self.container.addSubview(label)
         }else{
             var arrOfSegmentItemsStrings: [NSAttributedString] = []
             for (index,category) in self.representables.enumerated() {
-                if index == self.selectedIndex {
+                if index == self.indexOfClickedCategory {
                     let myAttribute = [ NSAttributedString.Key.foregroundColor: UIColor.black ]
                     arrOfSegmentItemsStrings.append(NSAttributedString(string: category.categoryName,attributes: myAttribute))
                     
@@ -196,14 +196,14 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
                     arrOfSegmentItemsStrings.append(NSAttributedString(string: category.categoryName,attributes: myAttribute))
                 }
             }
-            for view in self.blueView.subviews {
+            for view in self.container.subviews {
                 if let segmentView = view as? JNSegmentedCollectionView {
                     segmentView.removeFromSuperview()
                 }
             }
             let segmentedControlView = reBuildSegmentView(arrOfSegmentItems: arrOfSegmentItemsStrings)
             segmentedControlView.selectedIndex = self.indexOfClickedCategory
-            self.blueView.addSubview(segmentedControlView)
+            self.container.addSubview(segmentedControlView)
         }
         self.collectionView.reloadData()
     }
@@ -224,7 +224,7 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
     func reBuildSegmentView (arrOfSegmentItems: [NSAttributedString]) -> JNSegmentedCollectionView {
         let screenSize: CGRect = UIScreen.main.bounds
         let segmentedControlView = JNSegmentedCollectionView()
-        segmentedControlView.frame = CGRect(x: self.blueView.frame.minX+2, y: 2, width: self.blueView.frame.width-5 , height: screenSize.height*0.03)
+        segmentedControlView.frame = CGRect(x: self.container.frame.minX+2, y: 2, width: self.container.frame.width-5 , height: screenSize.height*0.03)
         
         let jNSegmentedCollectionItemVerticalSeparatorOptions = JNSegmentedCollectionItemVerticalSeparatorOptions (
             heigthRatio: 0.0,
@@ -253,7 +253,7 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
             options: jNSegmentedCollectionOptions,
             badgeCounts: []
         )
-        segmentedControlView.selectedIndex = self.selectedIndex
+        segmentedControlView.selectedIndex = self.indexOfClickedCategory
         segmentedControlView.didSelectItem = { segment in
             if arrOfSegmentItems[segment].string == "Classifications" {
                 self.selectedCategoryName = FilterCategory.Classifications.rawValue
@@ -271,11 +271,11 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
                 self.selectedCategoryName = FilterCategory.Skills.rawValue
                 self.collectionView.reloadData()
             }
-            self.selectedIndex = segment
+            self.indexOfClickedCategory = segment
             self.indexOfClickedCategory = segmentedControlView.selectedIndex
             var arrOfSegmentItems2 : [NSAttributedString] = []
             for (index,category) in self.representables.enumerated() {
-                if index == self.selectedIndex {
+                if index == self.indexOfClickedCategory {
                     let myAttribute = [ NSAttributedString.Key.foregroundColor: UIColor.black ]
                     arrOfSegmentItems2.append(NSAttributedString(string: category.categoryName,attributes: myAttribute))
                     
@@ -286,7 +286,7 @@ class BottomSelectionView: UIView , UIScrollViewDelegate, UICollectionViewDataSo
             }
             segmentedControlView.setup(
                 items: arrOfSegmentItems2,
-                selectedItems: [arrOfSegmentItems2[self.selectedIndex]],
+                selectedItems: [arrOfSegmentItems2[self.indexOfClickedCategory]],
                 options: jNSegmentedCollectionOptions
             )
         }

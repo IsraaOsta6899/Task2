@@ -103,12 +103,12 @@ class FilterViewModel {
 
                 let optionCellRepresentable = OptionTableViewCellRepresentable(optionTitle: option.name , isSelected: true, id: option.id)
                 
-                if self.selectionDegreeForeachCategory[self.allFilters[filterCategoryName]!.title] == .fullSelect{
+                switch self.selectionDegreeForeachCategory[self.allFilters[filterCategoryName]!.title] {
+                    
+                case .fullSelect :
                     optionCellRepresentable.setCheckImageName(isSelected: true)
                     sectionRepresentable.headerRepresentable?.setHeaderCheckImageName(selectionDegree: .fullSelect)
-                    
-                }else if  self.selectionDegreeForeachCategory[self.allFilters[filterCategoryName]!.title] == .partialSelect {
-                    
+                case .partialSelect:
                     sectionRepresentable.headerRepresentable?.setHeaderCheckImageName(selectionDegree: .partialSelect)
                     if self.partialSelectedFiltersForFilterCategory[allFilters[filterCategoryName]!.title]!.contains(option.id) {
                         optionCellRepresentable.setCheckImageName(isSelected: true)
@@ -116,9 +116,11 @@ class FilterViewModel {
                     }else{
                         optionCellRepresentable.setCheckImageName(isSelected: false)
                     }
-                }else {
+                case .zeroSelect :
                     sectionRepresentable.headerRepresentable?.setHeaderCheckImageName(selectionDegree: .zeroSelect)
                     optionCellRepresentable.setCheckImageName(isSelected: false)
+                default : break
+                    
                 }
                 sectionRepresentable.cellsRepresentable.append(optionCellRepresentable)
             }
@@ -279,7 +281,7 @@ class FilterViewModel {
                     if (self.selectionDegreeForeachCategory[nameOfFilter] == .partialSelect) || (self.selectionDegreeForeachCategory[nameOfFilter] == .fullSelect &&  self.allFilters[nameOfSection]!.filters.count == 1)  {
                         
                         self.partialSelectedFiltersForFilterCategory[nameOfFilter]?.remove(filterID)
-                        if self.partialSelectedFiltersForFilterCategory[nameOfFilter]?.count == 0{
+                        if self.partialSelectedFiltersForFilterCategory[nameOfFilter]!.isEmpty{
                             self.filterdRepresentable[indexPath.section].headerRepresentable?.setHeaderCheckImageName(selectionDegree: .zeroSelect)
                             self.partialSelectedFiltersForFilterCategory[nameOfFilter] = nil
                             self.selectionDegreeForeachCategory[nameOfFilter] = .zeroSelect
@@ -416,7 +418,7 @@ class FilterViewModel {
                 if cellRepresentable.id == key {
                     cellRepresentable.setCheckImageName(isSelected: false)
                     self.partialSelectedFiltersForFilterCategory[section]?.remove(key)
-                    if self.partialSelectedFiltersForFilterCategory[section]?.count == 0 {
+                    if self.partialSelectedFiltersForFilterCategory[section]!.isEmpty {
                         self.partialSelectedFiltersForFilterCategory[section] = nil
                         self.representables[indexForRepresentable].headerRepresentable?.setHeaderCheckImageName(selectionDegree: .zeroSelect)
                         self.selectionDegreeForeachCategory[section] = .zeroSelect
@@ -486,13 +488,14 @@ class FilterViewModel {
             if !isSelected {
                 // item not exist in representables --
                 self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.removeAll()
-                if self.selectionDegreeForeachCategory[self.allFilters[self.keys[sectionId]]!.title] == .fullSelect{
+                switch self.selectionDegreeForeachCategory[self.allFilters[self.keys[sectionId]]!.title] {
+                case .fullSelect :
                     self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.append(
                         TitleCollectionViewCellRepresentable(
                             optionTitle:  "All",
                             optionKey: -1)
                     )
-                }else{
+                case .partialSelect , .zeroSelect :
                     for (index,item) in self.self.allFilters[self.keys[sectionId]]!.filters.enumerated() {
                         if self.partialSelectedFiltersForFilterCategory[self.self.allFilters[self.keys[sectionId]]!.title]!.contains(item.id){
                             self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.append(
@@ -502,12 +505,12 @@ class FilterViewModel {
                             )
                         }
                     }
+                default : break
                 }
-                
             }else {
                 // item exist in representables , so i want to remove it from representable
                 self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.removeAll(where: {$0.idOfOption == self.allFilters[self.keys[sectionId]]!.filters[cellId].id })
-                if  self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.count == 0 {
+                if  self.bottomSeletionViewRepresentabel[indexOfRepresentable].categoryCellsRepresentables.isEmpty {
                     self.bottomSeletionViewRepresentabel.removeAll(where: {$0.categoryName == self.allFilters[self.keys[sectionId]]!.title })
                 }
             }
@@ -582,7 +585,7 @@ class FilterViewModel {
             self.bottomSeletionViewRepresentabel.removeAll(where: {$0.categoryName == sectionName})
         }else {
             self.bottomSeletionViewRepresentabel[indexOfSectionRep].categoryCellsRepresentables.removeAll(where: {$0.idOfOption == optionID})
-            if self.bottomSeletionViewRepresentabel[indexOfSectionRep].categoryCellsRepresentables.count == 0 {
+            if self.bottomSeletionViewRepresentabel[indexOfSectionRep].categoryCellsRepresentables.isEmpty {
                 self.bottomSeletionViewRepresentabel.removeAll(where: {$0.categoryName == sectionName})
             }
         }
@@ -593,7 +596,7 @@ class FilterViewModel {
         return self.bottomSeletionViewRepresentabel[indexOfSelectedCategory].categoryCellsRepresentables.count
     }
     
-    func representableForItemAt(sectionIndex: Int,indexPath: IndexPath)-> TitleCollectionViewCellRepresentable{
+    func representableForItemAt(sectionIndex: Int,indexPath: IndexPath)-> CollectionViewCellRepresentable{
         return self.bottomSeletionViewRepresentabel[sectionIndex].categoryCellsRepresentables[indexPath.row]
     }
 }
